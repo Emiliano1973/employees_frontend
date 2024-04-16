@@ -1,0 +1,12 @@
+.containerLoading{
+    display: grid;
+    place-content: center;
+    place-items: center;
+}
+
+
+.centerLoading {
+    margin-top: 50%;
+    grid-row: 1;
+    grid-column: 1;
+}
