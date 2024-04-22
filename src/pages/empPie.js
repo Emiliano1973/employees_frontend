@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 
 
 import {  useNavigate } from 'react-router-dom';
-import { Button, Col, Container,Row, Form } from 'react-bootstrap'
+import { Col, Container,Row, Form } from 'react-bootstrap'
 import Chart from 'react-google-charts';
 import { jwtDecode } from 'jwt-decode';
 import LoadingComponent from '../LoadingComponent';
@@ -10,12 +10,13 @@ import NavBar from '../NavBar';
 import { AuthContext } from '../routing/AuthContext';
 
 const EmpPie = () => {
-
-    const { token, loading } = useContext(AuthContext);
+  const [deptOptions, setDeptOptions] =useState([]);
+    const { token } = useContext(AuthContext);
     const [data, setData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [deptNo, setDeptNo] =useState('');
+    const [ disabled, setDisabled] =useState(false)
     const apiUrl = process.env.REACT_APP_SERVER_URL; 
  
     const navigate = useNavigate();
@@ -48,6 +49,32 @@ const EmpPie = () => {
                 setIsLoading(false);
             }
         };
+
+
+        const fetchDeptOptions = async () => {
+          try {
+            
+            const response = await fetch(`${apiUrl}/api/services/departments`, {
+              method: 'GET',
+              headers: {
+                'Authorization': 'Bearer '+token,
+                'access-control-allow-origin' : '*',
+                'Content-type': 'application/json; charset=UTF-8',
+                'Cache-Control': 'no-cache'
+              }});
+     
+  
+            if (!response.ok) {
+              throw new Error('Error in loading data');
+            }
+            const jsonData = await response.json();
+            setDeptOptions(jsonData.elements);
+          } catch (error) {
+            setError(error.message);
+          } finally {
+             setIsLoading(false); 
+          }
+        };
         const decoded = jwtDecode(token);
         const expDate=new Date();
         expDate.setTime( decoded.exp * 1000);
@@ -56,6 +83,7 @@ const EmpPie = () => {
             navigate('/logout');
             
         }else{
+          fetchDeptOptions();
             fetchData();
         }
     }, [token, navigate]);
@@ -63,8 +91,14 @@ const EmpPie = () => {
 
     const fetchReport = async (departmentNumber) => {
         try {
+          if(departmentNumber){
+          setDisabled(e=> true)
             setDeptNo(e=> departmentNumber);
-          const response = await fetch(`${apiUrl}/api/services/departments/`+departmentNumber+`/report/pdf`, {
+          }else{
+            setDeptNo(e=> '');
+            return;
+          }
+          const response = await fetch(`${apiUrl}/api/services/departments/${departmentNumber}/report/pdf`, {
             method: 'GET',
             headers: {
               'Authorization': 'Bearer '+token,
@@ -75,38 +109,33 @@ const EmpPie = () => {
             throw new Error('Error in loading data');
           }
               // Extract filename from header
+        
        const blob = await response.blob();
        const header=response.headers.get('content-disposition');
-       const filename =(header)?   header
+       const filename =header
        .split(';')
        .find(n => n.includes('filename='))
        .replace('filename=', '')
-       .trim():'department1.pdf';
+       .trim();
         const url = window.URL.createObjectURL(new Blob([blob]));
         const link = document.createElement("a");
         link.href = url;
         link.download = filename ;
         document.body.appendChild(link);
-
         link.click();
-
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
         } catch (error) {
           setError(error.message);
         } finally {
-           setIsLoading(false); 
+           setDisabled(false); 
         }
       }
     const handleChange =   (event)=>{
         const value = event.target.value;
-        if(value){
-            setIsLoading(e=>true);
-            fetchReport(value);
-        }    
+        fetchReport(value);
+      
     };
-
-
 
 
     if (isLoading) {
@@ -117,7 +146,12 @@ const EmpPie = () => {
         return <div>An error happened: {error}</div>;
       }
     
-    
+      const loadDeptOptions =   () =>{
+        return deptOptions.map(deptOption => (
+          <option value={deptOption.code}>{deptOption.description}</option>
+        ));
+      }
+  
 
     return (
         <>
@@ -128,17 +162,9 @@ const EmpPie = () => {
         <Col xs="9"> &nbsp;</Col>
         <Col xs="3" style={{'float':'right'}}>
         <Form.Label>Report</Form.Label>
-            <Form.Select  required as="select" type="select" value={deptNo}  name='departmentNumber' id='departmentNumber' onChange={handleChange} aria-label="Default select example">
+            <Form.Select  required as="select" type="select" style={disabled?{'cursor':'wait'}:{'cursor':'inherit'}} value={deptNo} disabled={disabled}  name='departmentNumber' id='departmentNumber' onChange={handleChange} aria-label="Default select example">
                 <option value="">Open this select menu</option>
-                <option value="d009">Customer Service</option>
-                    <option value="d005">Development</option>
-                    <option value="d002">Finance</option>
-                    <option value="d003">Human Resources</option>
-                    <option value="d001">Marketing</option>
-                    <option value="d004">Production</option>
-                    <option value="d006">Quality Management</option>
-                    <option value="d008">Research</option>
-                    <option value="d007">Sales</option>
+                {loadDeptOptions()}
             </Form.Select>
 
          </Col>

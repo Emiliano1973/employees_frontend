@@ -6,6 +6,7 @@ import '../App.css';
 import { AuthContext } from '../routing/AuthContext';
 import NavBar from '../NavBar';
 import { jwtDecode } from 'jwt-decode';
+import { TailSpin } from "react-loader-spinner";
 import LoadingComponent from '../LoadingComponent';
 
 const MainTable = () => {

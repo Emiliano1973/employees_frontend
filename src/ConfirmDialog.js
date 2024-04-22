@@ -6,7 +6,7 @@ const ConfirmDialog =   (props) =>{
   
   const {title ,message, btnOkLabel='Ok', btnKoLabel='Close', handleOkCall, params={param:null}, showDlg} = props
     const [show, setShow] = useState(props.showDlg);
-    const handleClose = () => showDlg.showModal=false;
+    const handleClose = () => show.showModal=false;
     
     const executeFeedBackMethod=  () =>{
         if(props.params){
@@ -18,9 +18,8 @@ const ConfirmDialog =   (props) =>{
     }
 
 
-
     return (
-        <Modal show={showDlg.shoModal} onHide={props.handleClose}>
+        <Modal show={show.shoModal} onHide={props.handleClose}>
         <Modal.Header closeButton>
           <Modal.Title>{props.title}</Modal.Title>
         </Modal.Header>

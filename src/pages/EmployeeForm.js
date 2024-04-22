@@ -5,7 +5,8 @@ import DatePicker from 'react-datepicker';
 import Col from 'react-bootstrap/Col';
 import Row from 'react-bootstrap/Row';
 import "react-datepicker/dist/react-datepicker.css";
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
+import { AuthContext } from '../routing/AuthContext';
 
 
 
@@ -15,7 +16,14 @@ const EmployeeForm = ({ handleSubmit, entity, readOnly}) => {
   const [startDate, setStartDate] = useState(null);
 
   const [endDate, setEndDate] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
   const [isReadOnly, setIsReadOnly] =useState(readOnly);
+  const [deptOptions, setDeptOptions] =useState([]);
+  const [error, setError] =useState('');
+  const { token} = useContext(AuthContext);
+  const apiUrl = process.env.REACT_APP_SERVER_URL; 
+
 
   const getDateFromString = ( dateString)=>{
     if(!dateString){
@@ -142,9 +150,40 @@ const EmployeeForm = ({ handleSubmit, entity, readOnly}) => {
 
 
      useEffect(() => {
+      const fetchDeptOptions = async () => {
+        try {
+          
+          const response = await fetch(`${apiUrl}/api/services/departments`, {
+            method: 'GET',
+            headers: {
+              'Authorization': 'Bearer '+token,
+              'access-control-allow-origin' : '*',
+              'Content-type': 'application/json; charset=UTF-8',
+              'Cache-Control': 'no-cache'
+            }});
+   
+
+          if (!response.ok) {
+            throw new Error('Error in loading data');
+          }
+          const jsonData = await response.json();
+          setDeptOptions(jsonData.elements);
+        } catch (error) {
+          setError(error.message);
+        } finally {
+           setIsLoading(false); 
+        }
+      };
+        fetchDeptOptions();
         setStartDate(getStartBirthDate())
         setEndDate(getEndBirthDate());
      }, []);
+
+    const loadDeptOptions =   () =>{
+      return deptOptions.map(deptOption => (
+        <option value={deptOption.code}>{deptOption.description}</option>
+      ));
+    }
 
     return (
      <>
@@ -201,15 +240,7 @@ const EmployeeForm = ({ handleSubmit, entity, readOnly}) => {
             <Form.Label>Department</Form.Label>
             <Form.Select value={employeeForm.departmentNumber} required as="select" type="select"  name='departmentNumber' id='departmentNumber' onChange={handleChange} aria-label="Default select example">
                 <option value="">Open this select menu</option>
-                <option value="d009">Customer Service</option>
-                    <option value="d005">Development</option>
-                    <option value="d002">Finance</option>
-                    <option value="d003">Human Resources</option>
-                    <option value="d001">Marketing</option>
-                    <option value="d004">Production</option>
-                    <option value="d006">Quality Management</option>
-                    <option value="d008">Research</option>
-                    <option value="d007">Sales</option>
+                {loadDeptOptions()}
             </Form.Select>
             <Form.Control.Feedback type="invalid" tooltip>
             Please select Department.

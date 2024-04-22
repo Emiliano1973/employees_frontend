@@ -25,7 +25,7 @@ const App = () => {
           <Route exact path='/pie' element={<EmpPie/>} />
           <Route exact path='/employeeUp/:employeeNumber' element={<EmployeeUpdateForm/>} />
           <Route exact path='/newEmployee' element={<NewEmployeeForm/>} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/logout" replace />} />
      </Routes> 
      </AuthProvider>
      </>
