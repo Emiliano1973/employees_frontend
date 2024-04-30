@@ -8,6 +8,7 @@ import { jwtDecode } from 'jwt-decode';
 import LoadingComponent from '../LoadingComponent';
 import NavBar from '../NavBar';
 import { AuthContext } from '../routing/AuthContext';
+import { departmentService } from '../services/depatrmentService';
 
 const EmpPie = () => {
   const [deptOptions, setDeptOptions] =useState([]);
@@ -53,22 +54,8 @@ const EmpPie = () => {
 
         const fetchDeptOptions = async () => {
           try {
-            
-            const response = await fetch(`${apiUrl}/api/services/departments`, {
-              method: 'GET',
-              headers: {
-                'Authorization': 'Bearer '+token,
-                'access-control-allow-origin' : '*',
-                'Content-type': 'application/json; charset=UTF-8',
-                'Cache-Control': 'no-cache'
-              }});
-     
-  
-            if (!response.ok) {
-              throw new Error('Error in loading data');
-            }
-            const jsonData = await response.json();
-            setDeptOptions(jsonData.elements);
+                const response = await   departmentService(apiUrl, token);            
+            setDeptOptions(response.elements);
           } catch (error) {
             setError(error.message);
           } finally {

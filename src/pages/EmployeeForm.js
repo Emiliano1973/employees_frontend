@@ -7,8 +7,8 @@ import Row from 'react-bootstrap/Row';
 import "react-datepicker/dist/react-datepicker.css";
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../routing/AuthContext';
-
-
+import { departmentService } from '../services/depatrmentService';
+import { titleService } from '../services/titleService';
 
 
 const EmployeeForm = ({ handleSubmit, entity, readOnly}) => {
@@ -20,6 +20,8 @@ const EmployeeForm = ({ handleSubmit, entity, readOnly}) => {
   
   const [isReadOnly, setIsReadOnly] =useState(readOnly);
   const [deptOptions, setDeptOptions] =useState([]);
+  const [titlesOptions, setTitlesOptions] =useState([]);
+  
   const [error, setError] =useState('');
   const { token} = useContext(AuthContext);
   const apiUrl = process.env.REACT_APP_SERVER_URL; 
@@ -152,22 +154,10 @@ const EmployeeForm = ({ handleSubmit, entity, readOnly}) => {
      useEffect(() => {
       const fetchDeptOptions = async () => {
         try {
-          
-          const response = await fetch(`${apiUrl}/api/services/departments`, {
-            method: 'GET',
-            headers: {
-              'Authorization': 'Bearer '+token,
-              'access-control-allow-origin' : '*',
-              'Content-type': 'application/json; charset=UTF-8',
-              'Cache-Control': 'no-cache'
-            }});
-   
-
-          if (!response.ok) {
-            throw new Error('Error in loading data');
-          }
-          const jsonData = await response.json();
-          setDeptOptions(jsonData.elements);
+          const response = await   departmentService(apiUrl, token);            
+          setDeptOptions(response.elements);
+          const response2= await titleService(apiUrl, token);
+          setTitlesOptions(response2.elements)
         } catch (error) {
           setError(error.message);
         } finally {
@@ -179,10 +169,20 @@ const EmployeeForm = ({ handleSubmit, entity, readOnly}) => {
         setEndDate(getEndBirthDate());
      }, []);
 
-    const loadDeptOptions =   () =>{
-      return deptOptions.map(deptOption => (
+    
+    const loadOptions= (optionsAvailables) =>{
+      return optionsAvailables.map(deptOption => (
         <option value={deptOption.code}>{deptOption.description}</option>
       ));
+    };
+
+     const loadDeptOptions =   () =>{
+      return loadOptions(deptOptions);
+    }
+
+
+    const loadTitleOptions =   () =>{
+      return loadOptions(titlesOptions);
     }
 
     return (
@@ -251,15 +251,7 @@ const EmployeeForm = ({ handleSubmit, entity, readOnly}) => {
             <Form.Label>Title</Form.Label>
             <Form.Select  onChange={handleChange} required as="select" type="select"  name='title' id='title' value={employeeForm.title} aria-label="Default select example">
                 <option value="">Open this select menu</option>
-                <option value="Assistant Engineer">Assistant Engineer</option>
-                <option value="Engineer">Engineer</option>
-                <option value="Junior Developer">Junior Developer</option>
-                <option value="Manager">Manager</option>
-                <option value="Senior Developer">Senior Developer</option>
-                <option value="Senior Engineer">Senior Engineer</option>
-                <option value="Senior Staff">Senior Staff</option>
-                <option value="Staff">Staff</option>
-                <option value="Technique Leader">Technique Leader</option>
+               {loadTitleOptions()}
             </Form.Select>
             <Form.Control.Feedback type="invalid" tooltip>
             Please select Title.
